@@ -89,12 +89,15 @@ test_that("alabaster functions work with Spectra", {
                       "processing_chunk_size", "processing_queue_variables",
                       "spectra_processing_queue.json") %in% dir(d)))
     expect_equal(read_json(file.path(d, "OBJECT"))$type, "spectra")
+    expect_no_error(validateAlabasterSpectra(d))
     res <- readObject(d)
     expect_s4_class(res, "Spectra")
     expect_equal(res@processing, a@processing)
     expect_equal(res@processingQueueVariables, a@processingQueueVariables)
     expect_equal(mz(res), mz(a))
     expect_equal(rtime(res), rtime(a))
+    saveObjectFile(d, "something else")
+    expect_error(validateAlabasterSpectra(d), "Expected")
     unlink(d, recursive = TRUE)
 
     ## consolidate = TRUE, filter data
