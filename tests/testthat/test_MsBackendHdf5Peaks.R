@@ -20,8 +20,18 @@ test_that("saveMsObject/readMsObject,MsBackendHdf5Peaks,PlainTextParam works", {
     expect_equal(mz(be_hdf5), mz(res))
 
     expect_error(saveMsObject(be_hdf5, p), "object stash")
-    unlink(d, recursive = TRUE)
 
+    ## Providing `spectraPath`
+    dd <- file.path(tempdir(), "h5_peaks")
+    dir.create(dd, showWarnings = FALSE)
+    file.copy(unique(be_hdf5$dataStorage),
+              to = file.path(dd, basename(unique(be_hdf5$dataStorage))))
+    res <- readMsObject(MsBackendHdf5Peaks(), p, spectraPath = dd)
+    expect_equal(dataStorageBasePath(res), normalizePath(dd))
+    unlink(d, recursive = TRUE)
+    unlink(dd, recursive = TRUE)
+
+    ## consolidate
     expect_no_error(saveMsObject(be_hdf5, p, consolidate = TRUE))
     expect_true(
         all(c("ms_backend_spectra_data.txt",
