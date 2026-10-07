@@ -16,8 +16,14 @@
 #'
 #' The stash of a `MsBackendCached` contains therefore the local spectra data
 #' cache (if present), the names of the available spectra variables and the
-#' total number of spectra. Supported stash formats are listed in the sections
-#' below.
+#' total number of spectra.
+#'
+#' Any classes extending `MsBackendCached` **must** implement their own
+#' `saveMsObject()` and `readMsObject()` methods and call `callNextMethod()` to
+#' trigger execution of the respective method from `MsBackendCached` storing
+#' respectively reading any cached data to (or from) the stash.
+#'
+#' Supported stash formats are listed in the sections below.
 #'
 #' @details
 #'
@@ -27,8 +33,8 @@
 #' - `saveMsObject()` and `saveObject()` will fail if the stash directory
 #'   already exist. Thus, stash functions of backend implementations extending
 #'   `MsBackendCached` should **first** call the `MsBackendCached`'s
-#'   `saveMsObject()` or `saveObject()` **before** exporting their respective
-#'   content to the stash directory.
+#'   `saveMsObject()` or `saveObject()` (e.g. through `callNextMethod()`)
+#'   **before** exporting their respective content to the stash directory.
 #'
 #' @section *alabaster*-based format, `AlabasterParam`:
 #'
@@ -96,6 +102,8 @@ NULL
 setMethod("saveMsObject", signature(object = "MsBackendCached",
                                     param = "PlainTextParam"),
           function(object, param, ...) {
+              .valid_upstream_call(object, "saveMsObject",
+                                   c(class(object)[1L], "PlainTextParam"))
               dir.create(param@path, showWarnings = FALSE, recursive = TRUE)
               fl <- file.path(param@path, "ms_backend_data.txt")
               .check_overwriting(fl)
@@ -145,6 +153,7 @@ setMethod("readMsObject", signature(object = "MsBackendCached",
 
 #' @rdname MsBackendCachedStash
 setMethod("saveObject", "MsBackendCached", function(x, path, ...) {
+    .valid_upstream_call(x, "saveObject", class(x)[1L])
     dir.create(path, showWarnings = FALSE, recursive = TRUE)
     saveObjectFile(path, "ms_backend_cached")
     altSaveObject(x@localData, path = file.path(path, "local_data"))
@@ -171,6 +180,8 @@ readMsBackendCached <- function(path = character(), metadata = list()) {
 setMethod("saveMsObject", signature(object = "MsBackendCached",
                                     param = "AlabasterParam"),
           function(object, param, ...) {
+              .valid_upstream_call(object, "saveMsObject",
+                                   c(class(object)[1L], "AlabasterParam"))
               saveObject(object, path = param@path)
           })
 
@@ -180,3 +191,48 @@ setMethod("readMsObject", signature(object = "MsBackendCached",
           function(object, param, ...) {
               readMsBackendCached(path = param@path)
           })
+
+#' @description
+#'
+#' Throw an error if the *save* method for `MsBackendCached` was called
+#' without any *save* method call from the inheriting object.
+#'
+#' Why?
+#'
+#' Because just calling `saveMsObject()` or `saveObject()` on the
+#' `MsBackendCached` without saving the data from the parent will result in an
+#' invalid/corrupt stash. Restoring that stash will only create a
+#' `MsBackendCached` which is not a complete `MsBackend` implementation.
+#'
+#' How can the save method be called?
+#'
+#' - `callNextMethod()` in the `saveMsObject()` method of the inheriting object.
+#' - `altSaveObject()` after `as(x, "MsBackendCached")`.
+#' - `getMethod()` specifically asking for the method.
+#'
+#' How can we check this?
+#'
+#' - use `selectMethod()` to check whether the respective method is implemented
+#'   for the original class.
+#'
+#' Alternatively... eventually
+#'
+#' - `vapply(sys.calls(), function(x) deparse(x)[1L], NA_character_)`
+#' - check if there is a `"callNextMethod"`, `"altSaveObject"` or `"getMethod"`
+#'   in the stack.
+#'
+#' @author Johannes Rainer
+#'
+#' @importFrom methods selectMethod
+#'
+#' @noRd
+.valid_upstream_call <- function(object, f = "saveMsObject",
+                                 signature = class(object)[1L]) {
+    rmeth <- selectMethod(f = f, signature = signature, optional = TRUE)
+    if (!(length(rmeth) && rmeth@defined[1L] == class(object)[1L]))
+        stop("No method \'", f, "\' available for \'", class(object)[1L],
+             "\'! Maybe the *Stash* package defining that method for ",
+             "\'", class(object)[1L] ,"\' needs to be loaded first?")
+    ## Could alternatively also check if @defined[1L] is `"MsBackendCached"`
+    ## and only throw an error in that case.
+}

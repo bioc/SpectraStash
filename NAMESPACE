@@ -35,6 +35,7 @@ importFrom(jsonlite,
 )
 importFrom(methods,
   hasMethod,
+  selectMethod,
   validObject
 )
 importFrom(stats,setNames)

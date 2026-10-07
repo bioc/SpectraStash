@@ -27,7 +27,7 @@ test_that("saveMsObject/readMsObject,MsBackendHdf5Peaks,PlainTextParam works", {
     file.copy(unique(be_hdf5$dataStorage),
               to = file.path(dd, basename(unique(be_hdf5$dataStorage))))
     res <- readMsObject(MsBackendHdf5Peaks(), p, spectraPath = dd)
-    expect_equal(dataStorageBasePath(res), normalizePath(dd))
+    expect_equal(normalizePath(dataStorageBasePath(res)), normalizePath(dd))
     unlink(d, recursive = TRUE)
     unlink(dd, recursive = TRUE)
 
