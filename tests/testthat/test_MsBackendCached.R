@@ -90,3 +90,63 @@ test_that("saveMsObject/readMsObject,MsBackendCached,AlabasterParam works", {
     expect_error(saveObject(a, d), "cannot save MsBackendCached")
     unlink(d, recursive = TRUE)
 })
+
+test_that("save methods fail for MsBackendCached child classes", {
+    ## These tests ensure that any backend extending `MsBackendCached` would
+    ## throw an error if it does not implement their own `saveMsObject()`/
+    ## `saveObject()` method and only the one from `MsBackendCached` is called.
+    setClass("CacheA",
+             contains = "MsBackendCached",
+             slots = c(something = "numeric"),
+             prototype = prototype(something = numeric()))
+    a <- backendInitialize(new("CacheA"), nspectra = 10)
+    a@something <- c(1.2, 1.4)
+
+    expect_no_error(.valid_upstream_call(
+        MsBackendCached(), signature = c("MsBackendCached", "AlabasterParam")))
+    expect_error(.valid_upstream_call(
+        a, "saveMsObject", signature = c("CacheA", "AlabasterParam")),
+        "No method 'saveMsObject'")
+    ## Define method
+    setMethod("saveMsObject",
+              signature(object = "CacheA", param = "AlabasterParam"),
+              function(object, param, ...) {
+                  callNextMethod()
+              })
+    expect_no_error(.valid_upstream_call(
+        a, "saveMsObject", signature = c("CacheA", "AlabasterParam")))
+    ## check also saveObject!
+    expect_no_error(.valid_upstream_call(
+        MsBackendCached(), "saveObject", "MsBackendCached"))
+    expect_error(.valid_upstream_call(a, "saveObject", "MsBackendCached"),
+                 "No method 'saveObject'")
+
+    ## check the actual method calls.
+    d <- file.path(tempdir(), "cache_test")
+    ## PlainTextParam
+    p <- PlainTextParam(d)
+    expect_error(saveMsObject(a, p), "No method 'saveMsObject' available")
+    setMethod("saveMsObject",
+              signature(object = "CacheA", param = "PlainTextParam"),
+              function(object, param, ...) {
+                  callNextMethod()
+                  message("saveMsObject,CacheA,PlainTextParam")
+              })
+    expect_no_error(expect_message(saveMsObject(a, p), "saveMsObject,CacheA"))
+    unlink(d, recursive = TRUE)
+
+    ## AlabasterParam; we defined a method already above; why are we then
+    ## calling the PlainTextParam one???
+    p <- AlabasterParam(d)
+    expect_no_error(saveMsObject(a, p))
+    unlink(d, recursive = TRUE)
+
+    ## saveObject
+    expect_error(saveObject(a, d), "No method 'saveObject' available")
+    setMethod("saveObject", "CacheA", function(x, path, ...) {
+        callNextMethod()
+        message("saveObject,CacheA")
+    })
+    expect_no_error(expect_message(saveObject(a, d), "saveObject,CacheA"))
+    unlink(d, recursive = TRUE)
+})

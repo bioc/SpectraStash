@@ -1,5 +1,13 @@
 # *SpectraStash* 0.97
 
+## Changes in version 0.99.3
+
+- Add checks that throw an error if `saveMsObject()` or `saveObject()` is
+  called on a class extending `MsBackendCached` that don't implement their
+  own `saveMsObject()` or `saveObject()` method. This avoids saving only
+  the cached content of the `MsBackendCached` and generating a incomplete stash
+  that can not be restored to a fully operational `MsBackend` instance.
+
 ## Changes in version 0.99.2
 
 - Complete unit test coverage to 100%.

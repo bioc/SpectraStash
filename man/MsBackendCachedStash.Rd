@@ -45,8 +45,14 @@ the \code{MsBackendSql}.
 
 The stash of a \code{MsBackendCached} contains therefore the local spectra data
 cache (if present), the names of the available spectra variables and the
-total number of spectra. Supported stash formats are listed in the sections
-below.
+total number of spectra.
+
+Any classes extending \code{MsBackendCached} \strong{must} implement their own
+\code{saveMsObject()} and \code{readMsObject()} methods and call \code{callNextMethod()} to
+trigger execution of the respective method from \code{MsBackendCached} storing
+respectively reading any cached data to (or from) the stash.
+
+Supported stash formats are listed in the sections below.
 }
 \details{
 Notes for stash-functionality for \code{MsBackend} objects extending
@@ -55,8 +61,8 @@ Notes for stash-functionality for \code{MsBackend} objects extending
 \item \code{saveMsObject()} and \code{saveObject()} will fail if the stash directory
 already exist. Thus, stash functions of backend implementations extending
 \code{MsBackendCached} should \strong{first} call the \code{MsBackendCached}'s
-\code{saveMsObject()} or \code{saveObject()} \strong{before} exporting their respective
-content to the stash directory.
+\code{saveMsObject()} or \code{saveObject()} (e.g. through \code{callNextMethod()})
+\strong{before} exporting their respective content to the stash directory.
 }
 }
 \section{\emph{alabaster}-based format, \code{AlabasterParam}}{
