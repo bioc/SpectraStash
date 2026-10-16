@@ -41,7 +41,7 @@ object should be stored in.}
 \item{...}{Currently ignored.}
 }
 \value{
-\code{readMsObject()} returns an \link[Spectra:MsBackendMzR]{Spectra::MsBackendMzR}` object.
+\code{readMsObject()} returns an \link[Spectra:MsBackendMzR]{Spectra::MsBackendMzR} object.
 }
 \description{
 \code{MsBackendMzR} classes can be stashed to (or read from) plain text

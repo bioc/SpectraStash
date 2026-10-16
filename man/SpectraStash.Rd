@@ -53,6 +53,11 @@ are supported:
 \item \code{MsBackendMzR}: see \link{MsBackendMzRStash} for details and options.
 \item \code{MsBackendHdf5Peaks}: see \link{MsBackendHdf5PeaksStash} for details and
 options.
+\item \code{MsBackendMemory}: see \link{MsBackendMemoryStash} for details and options.
+\item \code{MsBackendDataFrame}: see \link{MsBackendMemoryStash} for details and options.
+\item \code{MsBackendOfflineSql} (defined in the
+\href{https://bioconductor.org/packages/MsBackendSql}{\emph{MsBackendSql}} package):
+see \link{MsBackendSqlStash} for details and options.
 }
 
 The data backend of any \code{Spectra} backend can eventually be changed to one

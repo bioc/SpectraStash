@@ -1,5 +1,10 @@
 # *SpectraStash* 0.97
 
+## Changes in version 0.99.4
+
+- Add plain text-file based stash for `MsBackendOfflineSql` object from the
+  *MsBackendSql* Bioconductor package.
+
 ## Changes in version 0.99.3
 
 - Add checks that throw an error if `saveMsObject()` or `saveObject()` is
