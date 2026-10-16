@@ -106,15 +106,6 @@ test_that("readMsObject,MsBackendOfflineSql,PlainTextParam works", {
     unlink(d, recursive = TRUE)
 })
 
-test_that(".check_ms_backend_sql works", {
-    expect_true(.is_ms_backend_sql_installed())
-    with_mocked_bindings(
-        ".is_ms_backend_sql_installed" = function() FALSE,
-        code = expect_error(.check_ms_backend_sql(),
-                            "package 'MsBackendSql'")
-    )
-})
-
 test_that(".sql_driver_class works", {
     expect_equal(.sql_driver_class(NULL), "")
     expect_equal(.sql_driver_class(s), "Spectra::Spectra")

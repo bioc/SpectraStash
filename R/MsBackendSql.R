@@ -28,7 +28,7 @@
 #'
 #' - SQLite-based databases (using the *RSQLite* package)
 #'
-#' @section Text-file forma, `PlainTextParam`:
+#' @section Text-file format, `PlainTextParam`:
 #'
 #' `saveMsObject()` with a `PlainTextParam` stores the content of a
 #' `MsBackendOfflineSql` as text files into the stash folder. This creates
@@ -160,16 +160,6 @@ setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
 ##    Utility functions
 ################################################################################
 
-.is_ms_backend_sql_installed <- function() {
-    requireNamespace("MsBackendSql", quietly = TRUE)
-}
-
-.check_ms_backend_sql <- function() {
-    if (!.is_ms_backend_sql_installed())
-        stop("Required package 'MsBackendSql' not available. Please install ",
-             "it and try again.", call. = FALSE)
-}
-
 #' Return the database information as a `data.frame` from a
 #' `MsBackendOfflineSql`.
 #'
@@ -260,7 +250,7 @@ setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
 #' @description
 #'
 #' Helper function to initialize a `MsBackendOfflineSql` backend based on the
-#' *dbi* `data.frame` with database connection information. The funcion returns
+#' *dbi* `data.frame` with database connection information. The function returns
 #' an (initialized) instance of `MsBackendOfflineSql`. This backend must
 #' then be completed adding cached information.
 #'

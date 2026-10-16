@@ -49,7 +49,7 @@ call). This is currently supported for:
 \item SQLite-based databases (using the \emph{RSQLite} package)
 }
 }
-\section{Text-file forma, \code{PlainTextParam}}{
+\section{Text-file format, \code{PlainTextParam}}{
 
 
 \code{saveMsObject()} with a \code{PlainTextParam} stores the content of a
