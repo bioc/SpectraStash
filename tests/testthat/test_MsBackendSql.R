@@ -223,7 +223,10 @@ test_that(".dbinfo_update_path works", {
     )
     suppressWarnings(
         expect_equal(res$value,
-                     c("localhost", normalizePath(file.path(tempdir(), "test"),
-                                                  winslash = "/")))
+                     c("localhost",
+                       normalizePath(
+                           file.path(normalizePath(
+                               tempdir(), winslash = "/"), "test"),
+                           winslash = "/")))
     )
 })
