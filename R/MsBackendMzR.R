@@ -80,7 +80,7 @@
 #'
 #' @param ... Currently ignored.
 #'
-#' @return `readMsObject()` returns an [Spectra::MsBackendMzR]` object.
+#' @return `readMsObject()` returns an [Spectra::MsBackendMzR] object.
 #'
 #' @author Philippine Louail, Johannes Rainer
 #'

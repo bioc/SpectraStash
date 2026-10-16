@@ -25,6 +25,11 @@
 #' - `MsBackendMzR`: see [MsBackendMzRStash] for details and options.
 #' - `MsBackendHdf5Peaks`: see [MsBackendHdf5PeaksStash] for details and
 #'   options.
+#' - `MsBackendMemory`: see [MsBackendMemoryStash] for details and options.
+#' - `MsBackendDataFrame`: see [MsBackendMemoryStash] for details and options.
+#' - `MsBackendOfflineSql` (defined in the
+#'   [*MsBackendSql*](https://bioconductor.org/packages/MsBackendSql) package):
+#'   see [MsBackendSqlStash] for details and options.
 #'
 #' The data backend of any `Spectra` backend can eventually be changed to one
 #' of the above backends using the [Spectra::setBackend()] method to support

@@ -34,7 +34,10 @@ importFrom(jsonlite,
   write_json
 )
 importFrom(methods,
+  "slot<-",
+  callNextMethod,
   hasMethod,
+  new,
   selectMethod,
   validObject
 )

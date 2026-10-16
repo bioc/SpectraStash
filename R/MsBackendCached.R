@@ -129,10 +129,10 @@ setMethod("readMsObject", signature(object = "MsBackendCached",
               if (!file.exists(fl))
                   stop("No 'ms_backend_data.txt' file found in the path.")
               l2 <- readLines(fl, n = 2)
-              if (l2[1L] != "# MsBackendCached") {
+              if (l2[1L] != paste0("# ", class(object)[1L])) {
                   m <- paste0("\"", sub("#( )*", "", l2[1L]), "\"")
                   stop("Invalid class in 'ms_backend_data.txt' file. ",
-                       "Expected \"MsBackendCached\" but got: ", m)
+                       "Expected \"", class(object)[1L], "\" but got: ", m)
               }
               if (length(l2) > 1L) {
                   data <- read.table(file = fl, sep = "\t", header = TRUE)
@@ -232,7 +232,8 @@ setMethod("readMsObject", signature(object = "MsBackendCached",
     if (!(length(rmeth) && rmeth@defined[1L] == class(object)[1L]))
         stop("No method \'", f, "\' available for \'", class(object)[1L],
              "\'! Maybe the *Stash* package defining that method for ",
-             "\'", class(object)[1L] ,"\' needs to be loaded first?")
+             "\'", class(object)[1L] ,"\' needs to be loaded first?",
+             call. = FALSE)
     ## Could alternatively also check if @defined[1L] is `"MsBackendCached"`
     ## and only throw an error in that case.
 }
