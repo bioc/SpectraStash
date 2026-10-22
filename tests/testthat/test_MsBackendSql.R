@@ -106,6 +106,90 @@ test_that("readMsObject,MsBackendOfflineSql,PlainTextParam works", {
     unlink(d, recursive = TRUE)
 })
 
+test_that("alabaster base functionality for MsBackendOfflineSql works", {
+    d <- file.path(tempdir(), "sql_stash")
+    ## Empty object
+    o <- MsBackendOfflineSql()
+    saveObject(o, d)
+    expect_true(all(c("dbinfo", "local_data", "nspectra", "OBJECT",
+                      "spectra_ids", "spectra_variables") %in% dir(d)))
+    expect_equal(readObjectFile(d)$type, "ms_backend_offline_sql")
+    unlink(d, recursive = TRUE)
+
+    ## regular object
+    saveObject(be_osql, d)
+    expect_true(all(c("dbinfo", "local_data", "nspectra", "OBJECT",
+                      "spectra_ids", "spectra_variables") %in% dir(d)))
+    expect_no_error(validateAlabasterMsBackendOfflineSql(d))
+
+    ## read without package
+    with_mocked_bindings(
+        ".is_ms_backend_sql_installed" = function() FALSE,
+        code = expect_error(readAlabasterMsBackendOfflineSql(d),
+                            "package 'MsBackendSql'")
+    )
+    ## read data back in
+    res <- readAlabasterMsBackendOfflineSql(d)
+    expect_s4_class(res, "MsBackendOfflineSql")
+    expect_equal(rtime(res), rtime(be_osql))
+    expect_equal(res@dbname, be_osql@dbname)
+    expect_equal(res@spectraIds, be_osql@spectraIds)
+    unlink(d, recursive = TRUE)
+})
+
+test_that("saveMsObject,readMsObject,MsBackendOfflineSql,AlabasterParam", {
+    d <- file.path(tempdir(), "sql_stash")
+    p <- AlabasterParam(d)
+
+    ## empty object
+    o <- MsBackendOfflineSql()
+    expect_no_error(saveMsObject(o, p))
+    expect_true(all(c("dbinfo", "local_data", "nspectra", "OBJECT",
+                      "spectra_ids", "spectra_variables") %in% dir(d)))
+    res <- readMsObject(MsBackendOfflineSql(), p)
+    expect_s4_class(res, "MsBackendOfflineSql")
+    expect_true(length(res) == 0L)
+    unlink(d, recursive = TRUE)
+
+    ## cached content
+    tmp <- be_osql
+    tmp$running_index <- seq_along(be_osql)
+    tmp$char <- "A"
+    expect_no_error(saveMsObject(tmp, p))
+    res <- readMsObject(MsBackendOfflineSql(), p)
+    expect_equal(res@localData, tmp@localData)
+    expect_equal(res@dbname, tmp@dbname)
+    expect_equal(res@spectraIds, tmp@spectraIds)
+    expect_equal(res@nspectra, tmp@nspectra)
+    expect_equal(res@spectraVariables, tmp@spectraVariables)
+    unlink(d, recursive = TRUE)
+
+    ## cached and subset
+    idx <- c(5L, 2L, 123L, 54L, 5L)
+    tmp <- tmp[idx]
+    expect_no_error(saveMsObject(tmp, p))
+    res <- readMsObject(MsBackendOfflineSql(), p, password = "312")
+    expect_equal(res@password, "312")
+    expect_equal(res@nspectra, tmp@nspectra)
+    expect_equal(res@spectraIds, tmp@spectraIds)
+    expect_equal(res@dbname, tmp@dbname)
+    unlink(d, recursive = TRUE)
+
+    ## consolidate
+    expect_no_error(saveMsObject(tmp, p, consolidate = TRUE))
+    expect_true(basename(tmp@dbname) %in% dir(d))
+    res <- readMsObject(MsBackendOfflineSql(), p)
+    expect_equal(basename(res@dbname), basename(tmp@dbname))
+    expect_false(dirname(res@dbname) == dirname(tmp@dbname))
+    expect_equal(res$running_index, idx)
+    expect_equal(rtime(res), rtime(tmp))
+    unlink(d, recursive = TRUE)
+})
+
+test_that(".is_ms_backend_sql_installed works", {
+    expect_true(.is_ms_backend_sql_installed())
+})
+
 test_that(".sql_driver_class works", {
     expect_equal(.sql_driver_class(NULL), "")
     expect_equal(.sql_driver_class(s), "Spectra::Spectra")
