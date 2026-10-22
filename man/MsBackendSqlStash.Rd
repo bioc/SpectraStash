@@ -4,11 +4,20 @@
 \alias{MsBackendSqlStash}
 \alias{saveMsObject,MsBackendOfflineSql,PlainTextParam-method}
 \alias{readMsObject,MsBackendOfflineSql,PlainTextParam-method}
+\alias{saveObject,MsBackendOfflineSql-method}
+\alias{saveMsObject,MsBackendOfflineSql,AlabasterParam-method}
+\alias{readMsObject,MsBackendOfflineSql,AlabasterParam-method}
 \title{Stash for SQL-based backends}
 \usage{
 \S4method{saveMsObject}{MsBackendOfflineSql,PlainTextParam}(object, param, consolidate = FALSE)
 
 \S4method{readMsObject}{MsBackendOfflineSql,PlainTextParam}(object, param, password = character(), ...)
+
+\S4method{saveObject}{MsBackendOfflineSql}(x, path, consolidate = FALSE, ...)
+
+\S4method{saveMsObject}{MsBackendOfflineSql,AlabasterParam}(object, param, consolidate = FALSE, ...)
+
+\S4method{readMsObject}{MsBackendOfflineSql,AlabasterParam}(object, param, password = character())
 }
 \arguments{
 \item{object}{An \code{MsBackendOfflineSql} object.}
@@ -25,6 +34,11 @@ if required, the password to connect to the SQL database must be
 provided through this parameter.}
 
 \item{...}{Currently ignored.}
+
+\item{x}{For \code{saveObject()}: a \code{MsBackendOfflineSql}.}
+
+\item{path}{For \code{saveObject()} and \code{readObject()}: the path to the stash
+directory.}
 }
 \value{
 \code{readMsObject()} returns a \link[MsBackendSql:MsBackendOfflineSql]{MsBackendSql::MsBackendOfflineSql}
@@ -36,7 +50,8 @@ object.
 Bioconductor package can be stashed (or read from) plain text file or
 \emph{alabaster}-based stash formats using the \code{\link[MsStash:saveMsObject]{saveMsObject()}} and
 \code{\link[MsStash:readMsObject]{readMsObject()}} functions configuring the stash with a \link[MsStash:PlainTextParam]{PlainTextParam} or
-\link[MsStash:AlabasterParam]{AlabasterParam} parameter object.
+\link[MsStash:AlabasterParam]{AlabasterParam} parameter object. The Alabaster format is the preferred
+stash format.
 
 Additional properties of the stash formats are described in detail in the
 sections below.
@@ -49,6 +64,30 @@ call). This is currently supported for:
 \item SQLite-based databases (using the \emph{RSQLite} package)
 }
 }
+\section{Alabaster format, \code{AlabasterParam}}{
+
+
+\code{saveMsObject()} with an \code{AlabasterParam()} stores the backend to a stash
+folder in \emph{alabaster} format. Individual components of the backend are
+stored using base functionality of the \emph{alabaster.base} Bioconductor package
+into specific sub-folders within the main stash directory. These are:
+\itemize{
+\item \emph{dbinfo} directory: contains a \code{data.frame} saved with \emph{alabaster.base}
+with the database-specific information such as database name, host etc.
+\item \emph{spectra_ids} directory: contains an \code{integer} vector saved with
+\emph{alabaster.base} with the IDs (indices) of the individual spectra.
+}
+
+The remaining directories hold the content of the \code{MsBackendCached} object
+the \code{MsBackendOfflineSql} extends (i.e., all locally cached data). Using
+parameter \code{consolidate = TRUE} will also store the database file within
+the folder (if supported).
+
+In addition to the \code{saveMsObject()} and \code{readMsObject()} also the
+\emph{alabaster.base} \code{saveObject()} and \code{readObject()} methods are directly
+supported.
+}
+
 \section{Text-file format, \code{PlainTextParam}}{
 
 
@@ -88,9 +127,31 @@ library(MsBackendSql)
 dbname <- tempfile()
 s <- setBackend(s, MsBackendOfflineSql(), dbname = dbname, drv = SQLite())
 
-## Stash the `Spectra` object to a temporary folder
+## Stash the `Spectra` object to a temporary folder in alabaster format
 d <- file.path(tempdir(), "spectra_sql")
-saveMsObject(s, PlainTextParam(d))
+saveMsObject(s, AlabasterParam(d))
+
+## List the content of the SpectraStash
+dir(d)
+
+## List the content of the MsBackendOfflineSql stash, which is located
+## within the *backend* folder
+dir(file.path(d, "backend"))
+
+## Restore the object from the stash
+res <- readMsObject(Spectra(), AlabasterParam(d))
+res
+
+## Verify a SQL backend is used
+class(res@backend)
+
+## Repeat using the plain text file format. We need to first remove
+## the previously generated stash, as overwriting an existing stash
+## is not supported.
+unlink(d, recursive = TRUE)
+
+## Use `consolidate = TRUE` to store also the database into the stash
+saveMsObject(s, PlainTextParam(d), consolidate = TRUE)
 
 ## List the content of the SpectraStash
 dir(d)

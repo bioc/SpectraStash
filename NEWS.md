@@ -1,5 +1,9 @@
 # *SpectraStash* 0.97
 
+## Changes in version 0.99.5
+
+- Add *alabaster* stash for `MsBackendOfflineSql`.
+
 ## Changes in version 0.99.4
 
 - Add plain text-file based stash for `MsBackendOfflineSql` object from the

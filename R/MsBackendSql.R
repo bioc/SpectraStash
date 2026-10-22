@@ -15,7 +15,8 @@
 #' Bioconductor package can be stashed (or read from) plain text file or
 #' *alabaster*-based stash formats using the [saveMsObject()] and
 #' [readMsObject()] functions configuring the stash with a [PlainTextParam] or
-#' [AlabasterParam] parameter object.
+#' [AlabasterParam] parameter object. The Alabaster format is the preferred
+#' stash format.
 #'
 #' Additional properties of the stash formats are described in detail in the
 #' sections below.
@@ -27,6 +28,28 @@
 #' call). This is currently supported for:
 #'
 #' - SQLite-based databases (using the *RSQLite* package)
+#'
+#' @section Alabaster format, `AlabasterParam`:
+#'
+#' `saveMsObject()` with an `AlabasterParam()` stores the backend to a stash
+#' folder in *alabaster* format. Individual components of the backend are
+#' stored using base functionality of the *alabaster.base* Bioconductor package
+#' into specific sub-folders within the main stash directory. These are:
+#'
+#' - *dbinfo* directory: contains a `data.frame` saved with *alabaster.base*
+#'   with the database-specific information such as database name, host etc.
+#'
+#' - *spectra_ids* directory: contains an `integer` vector saved with
+#'   *alabaster.base* with the IDs (indices) of the individual spectra.
+#'
+#' The remaining directories hold the content of the `MsBackendCached` object
+#' the `MsBackendOfflineSql` extends (i.e., all locally cached data). Using
+#' parameter `consolidate = TRUE` will also store the database file within
+#' the folder (if supported).
+#'
+#' In addition to the `saveMsObject()` and `readMsObject()` also the
+#' *alabaster.base* `saveObject()` and `readObject()` methods are directly
+#' supported.
 #'
 #' @section Text-file format, `PlainTextParam`:
 #'
@@ -64,6 +87,11 @@
 #'     if required, the password to connect to the SQL database must be
 #'     provided through this parameter.
 #'
+#' @param path For `saveObject()` and `readObject()`: the path to the stash
+#'     directory.
+#'
+#' @param x For `saveObject()`: a `MsBackendOfflineSql`.
+#'
 #' @param ... Currently ignored.
 #'
 #' @return `readMsObject()` returns a [MsBackendSql::MsBackendOfflineSql]
@@ -85,9 +113,31 @@
 #' dbname <- tempfile()
 #' s <- setBackend(s, MsBackendOfflineSql(), dbname = dbname, drv = SQLite())
 #'
-#' ## Stash the `Spectra` object to a temporary folder
+#' ## Stash the `Spectra` object to a temporary folder in alabaster format
 #' d <- file.path(tempdir(), "spectra_sql")
-#' saveMsObject(s, PlainTextParam(d))
+#' saveMsObject(s, AlabasterParam(d))
+#'
+#' ## List the content of the SpectraStash
+#' dir(d)
+#'
+#' ## List the content of the MsBackendOfflineSql stash, which is located
+#' ## within the *backend* folder
+#' dir(file.path(d, "backend"))
+#'
+#' ## Restore the object from the stash
+#' res <- readMsObject(Spectra(), AlabasterParam(d))
+#' res
+#'
+#' ## Verify a SQL backend is used
+#' class(res@backend)
+#'
+#' ## Repeat using the plain text file format. We need to first remove
+#' ## the previously generated stash, as overwriting an existing stash
+#' ## is not supported.
+#' unlink(d, recursive = TRUE)
+#'
+#' ## Use `consolidate = TRUE` to store also the database into the stash
+#' saveMsObject(s, PlainTextParam(d), consolidate = TRUE)
 #'
 #' ## List the content of the SpectraStash
 #' dir(d)
@@ -156,9 +206,73 @@ setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
 ##    AlabasterParam
 ################################################################################
 
+#' @rdname MsBackendSqlStash
+#'
+#' @importFrom alabaster.base readObjectFile
+#'
+#' @importFrom methods as
+setMethod("saveObject", "MsBackendOfflineSql", function(x, path,
+                                                        consolidate = FALSE,
+                                                        ...) {
+    altSaveObject(as(x, "MsBackendCached"), path, ...)
+    info <- readObjectFile(path)
+    info$ms_backend_offline_sql <- list(version = "1.0")
+    saveObjectFile(path, "ms_backend_offline_sql", info)
+    if (consolidate)
+        x <- .consolidate_database(x, path)
+    altSaveObject(.dbinfo(x), path = file.path(path, "dbinfo"))
+    altSaveObject(x@spectraIds, path = file.path(path, "spectra_ids"))
+})
+
+validateAlabasterMsBackendOfflineSql <- function(path = character(),
+                                                 metadata = list()) {
+    validateMsBackendCached(path)
+    .check_directory_content(path, c("spectra_ids", "dbinfo"))
+}
+
+readAlabasterMsBackendOfflineSql <- function(path = character(),
+                                             metadata = list(),
+                                             password = character()) {
+    if (!.is_ms_backend_sql_installed())
+        stop("Required package 'MsBackendSql' missing. Please install ",
+             "and try again.", call. = FALSE)
+    validateAlabasterMsBackendOfflineSql(path, metadata)
+    dbi <- altReadObject(file.path(path, "dbinfo"))
+    object <- .initialize_ms_backend_offline_sql(
+        MsBackendSql::MsBackendOfflineSql(), dbi, path, password = password)
+    slot(object, "spectraIds", check = FALSE) <- altReadObject(
+        file.path(path, "spectra_ids"))
+    metadata$type <- "ms_backend_cached"
+    parent <- altReadObject(path, metadata = metadata)
+    slot(object, "localData", check = FALSE) <- parent@localData
+    slot(object, "nspectra", check = FALSE) <- parent@nspectra
+    slot(object, "spectraVariables", check = FALSE) <- parent@spectraVariables
+    validObject(object)
+    object
+}
+
+#' @rdname MsBackendSqlStash
+setMethod("saveMsObject", signature(object = "MsBackendOfflineSql",
+                                    param = "AlabasterParam"),
+          function(object, param, consolidate = FALSE, ...) {
+              saveObject(object, param@path, consolidate = consolidate, ...)
+          })
+
+#' @rdname MsBackendSqlStash
+setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
+                                    param = "AlabasterParam"),
+          function(object, param, password = character()) {
+              readAlabasterMsBackendOfflineSql(path = param@path,
+                                               password = password)
+          })
+
 ################################################################################
 ##    Utility functions
 ################################################################################
+
+.is_ms_backend_sql_installed <- function() {
+    requireNamespace("MsBackendSql", quietly = TRUE)
+}
 
 #' Return the database information as a `data.frame` from a
 #' `MsBackendOfflineSql`.

@@ -33,6 +33,7 @@
 #' Used in:
 #' - *R/MsBackendHdf5Peaks.R*: `readMsObject()`, `validateMsBackendHdf5Peaks()`
 #' - *R/MsBackendMzR.R*: `readMsObject()`, `validateMsBackendMzR()`
+#' - *R/MsBackendSql.R*: `validateAlabasterMsBackendOfflineSql()`.
 #'
 #' @noRd
 .check_directory_content <- function(path, expected = character()) {
@@ -107,6 +108,11 @@
     x
 }
 
+#' Convert a stash-local into an absolute path.
+#'
+#' Used in:
+#'
+#'
 #' @param x `character` with the stash-relative paths.
 #'
 #' @param path `character(1)` with the absolute path to the stash directory.
