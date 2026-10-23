@@ -4,23 +4,38 @@
 \alias{MsBackendSqlStash}
 \alias{saveMsObject,MsBackendOfflineSql,PlainTextParam-method}
 \alias{readMsObject,MsBackendOfflineSql,PlainTextParam-method}
+\alias{saveMsObject,MsBackendSql,PlainTextParam-method}
+\alias{readMsObject,MsBackendSql,PlainTextParam-method}
 \alias{saveObject,MsBackendOfflineSql-method}
 \alias{saveMsObject,MsBackendOfflineSql,AlabasterParam-method}
 \alias{readMsObject,MsBackendOfflineSql,AlabasterParam-method}
+\alias{saveObject,MsBackendSql-method}
+\alias{saveMsObject,MsBackendSql,AlabasterParam-method}
+\alias{readMsObject,MsBackendSql,AlabasterParam-method}
 \title{Stash for SQL-based backends}
 \usage{
-\S4method{saveMsObject}{MsBackendOfflineSql,PlainTextParam}(object, param, consolidate = FALSE)
+\S4method{saveMsObject}{MsBackendOfflineSql,PlainTextParam}(object, param, consolidate = FALSE, ...)
 
 \S4method{readMsObject}{MsBackendOfflineSql,PlainTextParam}(object, param, password = character(), ...)
+
+\S4method{saveMsObject}{MsBackendSql,PlainTextParam}(object, param, consolidate = FALSE, ...)
+
+\S4method{readMsObject}{MsBackendSql,PlainTextParam}(object, param, password = character())
 
 \S4method{saveObject}{MsBackendOfflineSql}(x, path, consolidate = FALSE, ...)
 
 \S4method{saveMsObject}{MsBackendOfflineSql,AlabasterParam}(object, param, consolidate = FALSE, ...)
 
 \S4method{readMsObject}{MsBackendOfflineSql,AlabasterParam}(object, param, password = character())
+
+\S4method{saveObject}{MsBackendSql}(x, path, consolidate = FALSE, ...)
+
+\S4method{saveMsObject}{MsBackendSql,AlabasterParam}(object, param, consolidate = FALSE, ...)
+
+\S4method{readMsObject}{MsBackendSql,AlabasterParam}(object, param, password = character())
 }
 \arguments{
-\item{object}{An \code{MsBackendOfflineSql} object.}
+\item{object}{An \code{MsBackendOfflineSql} or \code{MsBackendSql} object.}
 
 \item{param}{Either a \code{PlainTextParam} or \code{AlabasterParam}.}
 
@@ -28,12 +43,12 @@
 into the stash folder. This is currently only supported for some
 database formats and systems. See \emph{notes} section for details.}
 
+\item{...}{Currently ignored.}
+
 \item{password}{Optional \code{character(1)} with the password required to
 connect to the database. Passwords are never stored in a stash, thus,
 if required, the password to connect to the SQL database must be
 provided through this parameter.}
-
-\item{...}{Currently ignored.}
 
 \item{x}{For \code{saveObject()}: a \code{MsBackendOfflineSql}.}
 
@@ -42,10 +57,10 @@ directory.}
 }
 \value{
 \code{readMsObject()} returns a \link[MsBackendSql:MsBackendOfflineSql]{MsBackendSql::MsBackendOfflineSql}
-object.
+object or \link[MsBackendSql:MsBackendSql]{MsBackendSql::MsBackendSql} object.
 }
 \description{
-\code{MsBackendOfflineSql} backend classes defined in the
+\code{MsBackendOfflineSql} and \code{MsBackendSql} backend classes defined in the
 \href{https://bioconductor.org/packages/MsBackendSql}{\emph{MsBackendSql}}
 Bioconductor package can be stashed (or read from) plain text file or
 \emph{alabaster}-based stash formats using the \code{\link[MsStash:saveMsObject]{saveMsObject()}} and
@@ -63,6 +78,11 @@ call). This is currently supported for:
 \itemize{
 \item SQLite-based databases (using the \emph{RSQLite} package)
 }
+
+\code{MsBackendSql} backends are converted to a \code{MsBackendOfflineSql} before
+saving into the stash, because database connections can not be serialized.
+Thus, both classes use the same \emph{MsBackendSqlStash} format (and both can
+hence be restored from the same stash).
 }
 \section{Alabaster format, \code{AlabasterParam}}{
 
