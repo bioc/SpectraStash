@@ -21,6 +21,11 @@
         "ms_backend_offline_sql", validateAlabasterMsBackendOfflineSql)
     registerReadObjectFunction(
         "ms_backend_offline_sql", readAlabasterMsBackendOfflineSql)
+    ## MsbackendSql
+    registerValidateObjectFunction(
+        "ms_backend_sql", validateAlabasterMsBackendOfflineSql)
+    registerReadObjectFunction(
+        "ms_backend_sql", readAlabasterMsBackendSql)
     ## Spectra
     registerValidateObjectFunction("spectra", validateAlabasterSpectra)
     registerReadObjectFunction("spectra", readAlabasterSpectra)

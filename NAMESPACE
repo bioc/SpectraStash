@@ -36,10 +36,11 @@ importFrom(jsonlite,
 importFrom(methods,
   "slot<-",
   as,
-  callNextMethod,
+  getMethod,
   hasMethod,
   new,
   selectMethod,
+  signature,
   validObject
 )
 importFrom(stats,setNames)

@@ -1,16 +1,12 @@
 ## Stashing for backends defined in the *MsBackendSql* package
 
-## MsBackendSql: throw error or try to convert to MsBackendOfflineSql.
-## if it's SQLiteConnection: `dbGetInfo(con)$dbname` is the database; could
-## also get `$username`, `$host` and `$port`.
-
 #' @title Stash for SQL-based backends
 #'
 #' @name MsBackendSqlStash
 #'
 #' @description
 #'
-#' `MsBackendOfflineSql` backend classes defined in the
+#' `MsBackendOfflineSql` and `MsBackendSql` backend classes defined in the
 #' [*MsBackendSql*](https://bioconductor.org/packages/MsBackendSql)
 #' Bioconductor package can be stashed (or read from) plain text file or
 #' *alabaster*-based stash formats using the [saveMsObject()] and
@@ -28,6 +24,11 @@
 #' call). This is currently supported for:
 #'
 #' - SQLite-based databases (using the *RSQLite* package)
+#'
+#' `MsBackendSql` backends are converted to a `MsBackendOfflineSql` before
+#' saving into the stash, because database connections can not be serialized.
+#' Thus, both classes use the same *MsBackendSqlStash* format (and both can
+#' hence be restored from the same stash).
 #'
 #' @section Alabaster format, `AlabasterParam`:
 #'
@@ -78,7 +79,7 @@
 #'     into the stash folder. This is currently only supported for some
 #'     database formats and systems. See *notes* section for details.
 #'
-#' @param object An `MsBackendOfflineSql` object.
+#' @param object An `MsBackendOfflineSql` or `MsBackendSql` object.
 #'
 #' @param param Either a `PlainTextParam` or `AlabasterParam`.
 #'
@@ -95,7 +96,7 @@
 #' @param ... Currently ignored.
 #'
 #' @return `readMsObject()` returns a [MsBackendSql::MsBackendOfflineSql]
-#'     object.
+#'     object or [MsBackendSql::MsBackendSql] object.
 #'
 #' @author Johannes Rainer
 #'
@@ -156,11 +157,16 @@ NULL
 
 #' @rdname MsBackendSqlStash
 #'
-#' @importFrom methods callNextMethod
+#' @importFrom methods getMethod signature
 setMethod("saveMsObject", signature(object = "MsBackendOfflineSql",
                                     param = "PlainTextParam"),
-          function(object, param, consolidate = FALSE) {
-              callNextMethod()
+          function(object, param, consolidate = FALSE, ...) {
+              ## Can not use callNextMethod() because of inheritance of
+              ## MsBackendSql and MsBackendOfflineSql
+              FUN <- getMethod("saveMsObject",
+                               signature(object = "MsBackendCached",
+                                         param = "PlainTextParam"))
+              FUN(object, param, consolidate = consolidate, ...)
               if (consolidate)
                   object <- .consolidate_database(object, param@path)
               write.table(.dbinfo(object),
@@ -177,7 +183,12 @@ setMethod("saveMsObject", signature(object = "MsBackendOfflineSql",
 setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
                                     param = "PlainTextParam"),
           function(object, param, password = character(), ...) {
-              parent <- callNextMethod()
+              ## Can not use callNextMethod() because of inheritance of
+              ## MsBackendSql and MsBackendOfflineSql
+              FUN <- getMethod("readMsObject",
+                               signature(object = "MsBackendCached",
+                                         param = "PlainTextParam"))
+              parent <- FUN(object, param, password = password, ...)
               if (file.exists(file.path(param@path, "ms_backend_dbinfo.txt"))) {
                   dbi <- read.table(
                       file.path(param@path, "ms_backend_dbinfo.txt"),
@@ -198,6 +209,30 @@ setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
                       parent@spectraVariables
               } else stop("Required file \"ms_backend_dbinfo.txt\" not found ",
                           "in the provided path.", call. = FALSE)
+              validObject(object)
+              object
+          })
+
+#' @rdname MsBackendSqlStash
+setMethod("saveMsObject", signature(object = "MsBackendSql",
+                                    param = "PlainTextParam"),
+          function(object, param, consolidate = FALSE, ...) {
+              FUN <- getMethod("saveMsObject",
+                               signature(object = "MsBackendOfflineSql",
+                                         param = "PlainTextParam"))
+              FUN(.go_offline(object), param, consolidate = consolidate)
+          })
+
+#' @rdname MsBackendSqlStash
+setMethod("readMsObject", signature(object = "MsBackendSql",
+                                    param = "PlainTextParam"),
+          function(object, param, password = character()) {
+              FUN <- getMethod("readMsObject",
+                               signature(object = "MsBackendOfflineSql",
+                                         param = "PlainTextParam"))
+              object <- FUN(MsBackendSql::MsBackendOfflineSql(),
+                            param, password = password)
+              object <- .go_online(object)
               validObject(object)
               object
           })
@@ -266,12 +301,113 @@ setMethod("readMsObject", signature(object = "MsBackendOfflineSql",
                                                password = password)
           })
 
+#' @rdname MsBackendSqlStash
+setMethod("saveObject", "MsBackendSql", function(x, path,
+                                                 consolidate = FALSE,
+                                                 ...) {
+    x <- .go_offline(x)
+    altSaveObject(as(x, "MsBackendCached"), path, ...)
+    info <- readObjectFile(path)
+    info$ms_backend_sql <- list(version = "1.0")
+    saveObjectFile(path, "ms_backend_sql", info)
+    if (consolidate)
+        x <- .consolidate_database(x, path)
+    altSaveObject(.dbinfo(x), path = file.path(path, "dbinfo"))
+    altSaveObject(x@spectraIds, path = file.path(path, "spectra_ids"))
+})
+
+readAlabasterMsBackendSql <- function(path = character(),
+                                      metadata = list(),
+                                      password = character()) {
+    object <- readAlabasterMsBackendOfflineSql(path, metadata = metadata,
+                                               password = password)
+    object <- .go_online(object)
+    validObject(object)
+    object
+}
+
+#' @rdname MsBackendSqlStash
+setMethod("saveMsObject", signature(object = "MsBackendSql",
+                                    param = "AlabasterParam"),
+          function(object, param, consolidate = FALSE, ...) {
+              saveObject(object, param@path, consolidate = consolidate, ...)
+          })
+
+#' @rdname MsBackendSqlStash
+setMethod("readMsObject", signature(object = "MsBackendSql",
+                                    param = "AlabasterParam"),
+          function(object, param, password = character()) {
+              readAlabasterMsBackendOfflineSql(path = param@path,
+                                               password = password)
+          })
+
 ################################################################################
 ##    Utility functions
 ################################################################################
 
 .is_ms_backend_sql_installed <- function() {
     requireNamespace("MsBackendSql", quietly = TRUE)
+}
+
+#' helper function to convert a `MsBackendSql` to a `MsBackendOfflineSql()` if
+#' supported.
+#'
+#' @param x `MsBackendSql` object.
+#'
+#' @return `MsBackendOfflineSql`
+#'
+#' @noRd
+.go_offline <- function(x) {
+    if (!.offline_supported(x))
+        stop("Changing to offline-mode is currently not supported for ",
+             "database connections of type: ", class(x@dbcon)[1L],
+             call. = FALSE)
+    dbi <- DBI::dbGetInfo(x@dbcon)
+    drv <- strsplit(.class_to_driver(class(x@dbcon)[1L]), "::",
+                    fixed = TRUE)[[1L]]
+    x <- as(x, "MsBackendOfflineSql")
+    requireNamespace(drv[1L])
+    x@driver <- do.call(drv[2L], list())
+    x@dbname <- dbi$dbname
+    x@user <- as.character(dbi$username)
+    x@host <- as.character(dbi$host)
+    x@port <- as.integer(dbi$port)
+    ## DBI::dbDisconnect(x@dbcon)
+    x@dbcon <- NULL
+    x
+}
+
+#' Convert a `MsBackendOfflineSql` to a `MsBackendSql`.
+#'
+#' @param x `MsBackendOfflineSql`
+#'
+#' @return `MsBackendSql`
+#'
+#' @noRd
+.go_online <- function(x) {
+    con <- MsBackendSql:::.db_connect(x)
+    x <- as(x, "MsBackendSql")
+    x@dbcon <- con
+    x
+}
+
+#' Check if the database would support switching to *offline mode*. This mostly
+#' depends on what we have implemented so far and less on the database system
+#' used as most should support this, but we might need password etc which we
+#' might not have.
+#'
+#' @noRd
+.offline_supported <- function(x) {
+    class(x@dbcon)[1L] %in% c("SQLiteConnection")
+}
+
+#' Map database connection class to the respective connection driver we could
+#' use. Needs to manually expanded for new supported database systems.
+#'
+#' @noRd
+.class_to_driver <- function(x) {
+    DRV <- c(SQLiteConnection = "RSQLite::SQLite")
+    DRV[x]
 }
 
 #' Return the database information as a `data.frame` from a

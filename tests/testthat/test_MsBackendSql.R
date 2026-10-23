@@ -5,6 +5,7 @@ s <- Spectra(MsDataHub::X20171016_POOL_POS_1_105.134.mzML())
 dbf <- file.path(tempdir(), "test.sqlite")
 be_osql <- setBackend(s, backend = MsBackendOfflineSql(),
                       dbname = dbf, drv = SQLite())@backend
+be_sql <- backendInitialize(MsBackendSql(), dbcon = dbConnect(SQLite(), dbf))
 
 test_that("saveMsObject,MsBackendOfflineSql,PlainTextParam works", {
     d <- file.path(tempdir(), "ms_backend_offlinesql")
@@ -186,6 +187,58 @@ test_that("saveMsObject,readMsObject,MsBackendOfflineSql,AlabasterParam", {
     unlink(d, recursive = TRUE)
 })
 
+test_that("Alabaster functionality works for MsBackendSql", {
+    d <- file.path(tempdir(), "sql_stash")
+    p <- AlabasterParam(d)
+
+    expect_no_error(saveObject(be_sql, d))
+    res <- readObject(d)
+    expect_s4_class(res, "MsBackendSql")
+    expect_equal(res@localData, be_sql@localData)
+    expect_equal(rtime(res), rtime(be_sql))
+    unlink(d, recursive = TRUE)
+
+    tmp <- be_sql[1:30]
+    tmp$other_var <- "B"
+    tmp$my_index <- 1:30
+    expect_no_error(saveMsObject(tmp, p, consolidate = TRUE))
+    expect_true(basename(be_osql@dbname) %in% dir(d))
+    res <- readMsObject(MsBackendSql(), p)
+    expect_s4_class(res, "MsBackendSql")
+    expect_equal(res@localData, tmp@localData)
+    expect_equal(rtime(res), rtime(tmp))
+
+    res <- readMsObject(MsBackendOfflineSql(), p)
+    expect_s4_class(res, "MsBackendOfflineSql")
+    unlink(d, recursive = TRUE)
+})
+
+test_that("plain text functionality works for MsBackendSql", {
+    d <- file.path(tempdir(), "sql_stash")
+    p <- PlainTextParam(d)
+
+    expect_no_error(saveMsObject(be_sql, p))
+    res <- readMsObject(MsBackendSql(), p)
+    expect_s4_class(res, "MsBackendSql")
+    expect_equal(res@localData, be_sql@localData)
+    expect_equal(rtime(res), rtime(be_sql))
+    unlink(d, recursive = TRUE)
+
+    tmp <- be_sql[1:30]
+    tmp$other_var <- "B"
+    tmp$my_index <- 1:30
+    expect_no_error(saveMsObject(tmp, p, consolidate = TRUE))
+    expect_true(basename(be_osql@dbname) %in% dir(d))
+    res <- readMsObject(MsBackendSql(), p)
+    expect_s4_class(res, "MsBackendSql")
+    expect_equal(res@localData, tmp@localData)
+    expect_equal(rtime(res), rtime(tmp))
+
+    res <- readMsObject(MsBackendOfflineSql(), p)
+    expect_s4_class(res, "MsBackendOfflineSql")
+    unlink(d, recursive = TRUE)
+})
+
 test_that(".is_ms_backend_sql_installed works", {
     expect_true(.is_ms_backend_sql_installed())
 })
@@ -304,4 +357,24 @@ test_that(".dbinfo_update_path works", {
                                tempdir(), winslash = "/"), "test"),
                            winslash = "/")))
     )
+})
+
+test_that(".go_offline and .go_online works", {
+    expect_error(.go_offline(MsBackendSql()), "currently not supported")
+    res <- .go_offline(be_sql)
+    expect_s4_class(res, "MsBackendOfflineSql")
+    res <- .go_online(res)
+    expect_s4_class(res, "MsBackendSql")
+})
+
+test_that(".offline_supported works", {
+    expect_false(.offline_supported(MsBackendOfflineSql()))
+    expect_true(.offline_supported(be_sql))
+})
+
+test_that(".class_to_driver works", {
+    res <- .class_to_driver("something")
+    expect_equal(unname(res), NA_character_)
+    res <- .class_to_driver("SQLiteConnection")
+    expect_equal(res, c(SQLiteConnection = "RSQLite::SQLite"))
 })

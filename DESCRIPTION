@@ -1,6 +1,6 @@
 Package: SpectraStash
 Title: Serialize and restore Spectra objects in interoperable file formats
-Version: 0.99.4
+Version: 0.99.6
 Authors@R:
     c(person(given = "Johannes", family = "Rainer",
              email = "Johannes.Rainer@eurac.edu",
@@ -49,7 +49,8 @@ Suggests:
     pkgload,
     callr,
     MsBackendSql,
-    RSQLite
+    RSQLite,
+    DBI
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr
