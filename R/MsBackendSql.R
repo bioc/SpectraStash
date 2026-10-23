@@ -349,7 +349,7 @@ setMethod("readMsObject", signature(object = "MsBackendSql",
     requireNamespace("MsBackendSql", quietly = TRUE)
 }
 
-#' helper function to convert a `MsBackendSql` to a `MsBackendOfflineSql()` if
+#' helper function to convert a `MsBackendSql` to a `MsBackendOfflineSql` if
 #' supported.
 #'
 #' @param x `MsBackendSql` object.
