@@ -1,5 +1,10 @@
 # *SpectraStash* 0.97
 
+## Changes in version 0.99.7
+
+- Add stash support for `MsBackendMetaboLights` reusing the stash format of
+  `MsBackendMzR`.
+
 ## Changes in version 0.99.6
 
 - Add *MsBackendSql* stash support for `MsBackendSql`.

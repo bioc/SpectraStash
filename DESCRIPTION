@@ -1,6 +1,6 @@
 Package: SpectraStash
 Title: Serialize and restore Spectra objects in interoperable file formats
-Version: 0.99.6
+Version: 0.99.7
 Authors@R:
     c(person(given = "Johannes", family = "Rainer",
              email = "Johannes.Rainer@eurac.edu",
@@ -16,7 +16,7 @@ Authors@R:
              comment = c(ORCID = "0000-0002-1520-2268")),
       person(given = "Gabriele", family = "Tomè",
              email = "gabriele.tome@eurac.edu",
-             role = c("ctb"),
+             role = c("aut"),
              comment = c(ORCID = "0000-0002-3976-6068",
              fnd = "MetaRbolomics4Galaxy project (CUP: D53C25001030003) co-funded by the Autonomous Province of Bolzano under the Joint Projects South Tyrol–Germany 2025 program.")))
 Description: The serialization mechanism of R allows to save and load R data
@@ -49,6 +49,7 @@ Suggests:
     pkgload,
     callr,
     MsBackendSql,
+    MsBackendMetaboLights,
     RSQLite,
     DBI
 License: GPL-3

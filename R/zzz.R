@@ -26,6 +26,11 @@
         "ms_backend_sql", validateAlabasterMsBackendOfflineSql)
     registerReadObjectFunction(
         "ms_backend_sql", readAlabasterMsBackendSql)
+    ## MsBackendMetaboLights
+    registerValidateObjectFunction("ms_backend_metabo_lights",
+                                   validateMsBackendMetaboLights)
+    registerReadObjectFunction(
+        "ms_backend_metabo_lights", readMsBackendMetaboLights)
     ## Spectra
     registerValidateObjectFunction("spectra", validateAlabasterSpectra)
     registerReadObjectFunction("spectra", readAlabasterSpectra)
