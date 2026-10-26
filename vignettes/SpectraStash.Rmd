@@ -224,6 +224,18 @@ readMsObject(MsBackendHdf5Peaks(),
              AlabasterParam(file.path(d2, "backend", "backend")))
 ```
 
+## Stashes for additional `MsBackend` implementations
+
+Next to the stash implementations of the *core* backend classes from the
+`r Biocpkg("Spectra")` package (namely, `MsBackendMzR`, `MsBackendMemory`,
+`MsBackendDataFrame` and `MsBackendHdf5Peaks`), the *SpectraStash* package
+defines also stash functionality for backends from other Bioconductor
+packages. These are:
+
+- `MsBackendSql` and `MsBackendOfflineSql` backends from the
+  `r Biocpkg("MsBackendSql")` package.
+- `MsBackendMetaboLights` from the `r Biocpkg("MsBackendMetaboLights")` package.
+
 # Session information
 
 ```{r session-info}

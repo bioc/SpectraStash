@@ -33,11 +33,34 @@ this framework for `Spectra` objects and its data backends.
 ## Supported Formats
 
 ### ✅ Plain Text (`PlainTextParam`)
-- Tab-delimited export/import for key objects:
+- Tab-delimited export/import for key objects.
 
 ### ✅ Alabaster (`AlabasterParam`)
 - Structured archival using HDF5 and JSON (via
   [`alabaster.base`](https://doi.org/doi:10.18129/B9.bioc.alabaster.base))
+
+## Supported MS data objects
+
+From the [*Spectra*](https://bioconductor.org/packages/Spectra) package:
+
+- `Spectra`
+- `MsBackendMzR`
+- `MsBackendMemory`
+- `MsBackendDataFrame`
+- `MsBackendHdf5Peaks`
+- `MsBackendCached`
+
+From the [*MsBackendSql*](https://bioconductor.org/packages/MsBackendSQl)
+package:
+
+- `MsBackendSql`
+- `MsBackendOfflineSql`
+
+From the
+[*MsBackendMetaboLights*](https://bioconductor.org/packages/MsBackendMetaboLights)
+package:
+
+- `MsBackendMetatoLights`
 
 ---
 
