@@ -1,6 +1,6 @@
 #' @title Stash for backends for data from public repositories
 #'
-#' @name MsBackendMetablLightsStash
+#' @name MsBackendMetaboLightsStash
 #'
 #' @description
 #'
@@ -15,7 +15,7 @@
 #' @note
 #'
 #' `saveMsObject()` for `MsBackendMetaboLights` does not support (and does not
-#' require) the `consilidate` parameter that most other backends implement to
+#' require) the `consolidate` parameter that most other backends implement to
 #' create portable stashes. `MsBackendMetaboLights` backends retrieve and cache
 #' the mass spectrometry data files if needed from the public repository and
 #' are thus inherently portable.
@@ -94,7 +94,7 @@ NULL
 ##    MsBackendMetaboLights,AlabasterParam
 ################################################################################
 
-#' @rdname MsBackendMetablLightsStash
+#' @rdname MsBackendMetaboLightsStash
 #'
 #' @importFrom methods callNextMethod
 setMethod("saveObject", "MsBackendMetaboLights", function(x, path,
@@ -127,14 +127,14 @@ readMsBackendMetaboLights <- function(path = character(),
     MsBackendMetaboLights::mtbls_sync(be, offline = offline)
 }
 
-#' @rdname MsBackendMetablLightsStash
+#' @rdname MsBackendMetaboLightsStash
 setMethod("saveMsObject", signature(object = "MsBackendMetaboLights",
                                     param = "AlabasterParam"),
           function(object, param, ...) {
               saveObject(object, path = param@path, ...)
           })
 
-#' @rdname MsBackendMetablLightsStash
+#' @rdname MsBackendMetaboLightsStash
 setMethod("readMsObject", signature(object = "MsBackendMetaboLights",
                                     param = "AlabasterParam"),
           function(object, param, offline = FALSE, ...) {
