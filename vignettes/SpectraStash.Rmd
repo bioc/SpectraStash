@@ -236,6 +236,11 @@ packages. These are:
   `r Biocpkg("MsBackendSql")` package.
 - `MsBackendMetaboLights` from the `r Biocpkg("MsBackendMetaboLights")` package.
 
+# License
+
+This vignette is distributed under a [CC BY-SA
+license](https://creativecommons.org/licenses/by-sa/4.0/).
+
 # Session information
 
 ```{r session-info}
